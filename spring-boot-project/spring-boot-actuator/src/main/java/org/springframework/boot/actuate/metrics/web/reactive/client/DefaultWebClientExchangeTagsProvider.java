@@ -34,7 +34,7 @@ import reactor.util.context.ContextView;
 public class DefaultWebClientExchangeTagsProvider implements WebClientExchangeTagsProvider {
 
 	@Override
-	public Iterable<Tag> tags(ClientRequest request, ClientResponse response, Throwable throwable, ContextView view) {
+	public Iterable<Tag> tags(ClientRequest request, ClientResponse response, Throwable throwable, ContextView ctx) {
 		Tag method = WebClientExchangeTags.method(request);
 		Tag uri = WebClientExchangeTags.uri(request);
 		Tag clientName = WebClientExchangeTags.clientName(request);

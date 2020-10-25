@@ -28,6 +28,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.util.context.ContextView;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
@@ -49,17 +50,20 @@ class DefaultWebClientExchangeTagsProviderTests {
 
 	private ClientResponse response;
 
+	private ContextView contextView;
+
 	@BeforeEach
 	void setup() {
 		this.request = ClientRequest.create(HttpMethod.GET, URI.create("https://example.org/projects/spring-boot"))
 				.attribute(URI_TEMPLATE_ATTRIBUTE, "https://example.org/projects/{project}").build();
 		this.response = mock(ClientResponse.class);
+		contextView = mock(ContextView.class);
 		given(this.response.rawStatusCode()).willReturn(HttpStatus.OK.value());
 	}
 
 	@Test
 	void tagsShouldBePopulated() {
-		Iterable<Tag> tags = this.tagsProvider.tags(this.request, this.response, null);
+		Iterable<Tag> tags = this.tagsProvider.tags(this.request, this.response, null, contextView);
 		assertThat(tags).containsExactlyInAnyOrder(Tag.of("method", "GET"), Tag.of("uri", "/projects/{project}"),
 				Tag.of("clientName", "example.org"), Tag.of("status", "200"), Tag.of("outcome", "SUCCESS"));
 	}
@@ -68,28 +72,28 @@ class DefaultWebClientExchangeTagsProviderTests {
 	void tagsWhenNoUriTemplateShouldProvideUriPath() {
 		ClientRequest request = ClientRequest
 				.create(HttpMethod.GET, URI.create("https://example.org/projects/spring-boot")).build();
-		Iterable<Tag> tags = this.tagsProvider.tags(request, this.response, null);
+		Iterable<Tag> tags = this.tagsProvider.tags(request, this.response, null, contextView);
 		assertThat(tags).containsExactlyInAnyOrder(Tag.of("method", "GET"), Tag.of("uri", "/projects/spring-boot"),
 				Tag.of("clientName", "example.org"), Tag.of("status", "200"), Tag.of("outcome", "SUCCESS"));
 	}
 
 	@Test
 	void tagsWhenIoExceptionShouldReturnIoErrorStatus() {
-		Iterable<Tag> tags = this.tagsProvider.tags(this.request, null, new IOException());
+		Iterable<Tag> tags = this.tagsProvider.tags(this.request, null, new IOException(), contextView);
 		assertThat(tags).containsExactlyInAnyOrder(Tag.of("method", "GET"), Tag.of("uri", "/projects/{project}"),
 				Tag.of("clientName", "example.org"), Tag.of("status", "IO_ERROR"), Tag.of("outcome", "UNKNOWN"));
 	}
 
 	@Test
 	void tagsWhenExceptionShouldReturnClientErrorStatus() {
-		Iterable<Tag> tags = this.tagsProvider.tags(this.request, null, new IllegalArgumentException());
+		Iterable<Tag> tags = this.tagsProvider.tags(this.request, null, new IllegalArgumentException(), contextView);
 		assertThat(tags).containsExactlyInAnyOrder(Tag.of("method", "GET"), Tag.of("uri", "/projects/{project}"),
 				Tag.of("clientName", "example.org"), Tag.of("status", "CLIENT_ERROR"), Tag.of("outcome", "UNKNOWN"));
 	}
 
 	@Test
 	void tagsWhenCancelledRequestShouldReturnClientErrorStatus() {
-		Iterable<Tag> tags = this.tagsProvider.tags(this.request, null, null);
+		Iterable<Tag> tags = this.tagsProvider.tags(this.request, null, null, contextView);
 		assertThat(tags).containsExactlyInAnyOrder(Tag.of("method", "GET"), Tag.of("uri", "/projects/{project}"),
 				Tag.of("clientName", "example.org"), Tag.of("status", "CLIENT_ERROR"), Tag.of("outcome", "UNKNOWN"));
 	}
