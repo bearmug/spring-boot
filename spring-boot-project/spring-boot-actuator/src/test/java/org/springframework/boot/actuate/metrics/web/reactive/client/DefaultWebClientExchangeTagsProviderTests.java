@@ -18,6 +18,8 @@ package org.springframework.boot.actuate.metrics.web.reactive.client;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.Collections;
 
 import io.micrometer.core.instrument.Tag;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +33,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.util.context.ContextView;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
@@ -59,6 +62,7 @@ class DefaultWebClientExchangeTagsProviderTests {
 		this.response = mock(ClientResponse.class);
 		contextView = mock(ContextView.class);
 		given(this.response.rawStatusCode()).willReturn(HttpStatus.OK.value());
+		given(this.contextView.get(eq("CONTEXT_KEY"))).willReturn("CONTEXT_VALUE");
 	}
 
 	@Test
@@ -96,6 +100,14 @@ class DefaultWebClientExchangeTagsProviderTests {
 		Iterable<Tag> tags = this.tagsProvider.tags(this.request, null, null, contextView);
 		assertThat(tags).containsExactlyInAnyOrder(Tag.of("method", "GET"), Tag.of("uri", "/projects/{project}"),
 				Tag.of("clientName", "example.org"), Tag.of("status", "CLIENT_ERROR"), Tag.of("outcome", "UNKNOWN"));
+	}
+
+	@Test
+	void tagsCouldBePopulatedFromContext() {
+		WebClientExchangeTagsProvider contextProvider = (request, response, throwable, ctx) ->
+				Collections.singletonList(Tag.of("CONTEXT_KEY", ctx.get("CONTEXT_KEY")));
+		Iterable<Tag> tags = contextProvider.tags(this.request, this.response, null, contextView);
+		assertThat(tags).containsExactly(Tag.of("CONTEXT_KEY", "CONTEXT_VALUE"));
 	}
 
 }
