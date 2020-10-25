@@ -83,12 +83,12 @@ public class MetricsWebClientFilterFunction implements ExchangeFilterFunction {
 		return Mono.deferContextual((ctx) -> responseMono.doOnEach((signal) -> {
 			if (signal.isOnNext() || signal.isOnError()) {
 				responseReceived.set(true);
-				Iterable<Tag> tags = this.tagProvider.tags(request, signal.get(), signal.getThrowable());
+				Iterable<Tag> tags = this.tagProvider.tags(request, signal.get(), signal.getThrowable(), ctx);
 				recordTimer(tags, getStartTime(ctx));
 			}
 		}).doFinally((signalType) -> {
 			if (!responseReceived.get() && SignalType.CANCEL.equals(signalType)) {
-				Iterable<Tag> tags = this.tagProvider.tags(request, null, null);
+				Iterable<Tag> tags = this.tagProvider.tags(request, null, null, ctx);
 				recordTimer(tags, getStartTime(ctx));
 			}
 		}));

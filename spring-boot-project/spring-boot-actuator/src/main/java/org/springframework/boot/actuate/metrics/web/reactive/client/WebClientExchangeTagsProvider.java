@@ -20,6 +20,7 @@ import io.micrometer.core.instrument.Tag;
 
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
+import reactor.util.context.ContextView;
 
 /**
  * {@link Tag Tags} provider for an exchange performed by a
@@ -36,8 +37,9 @@ public interface WebClientExchangeTagsProvider {
 	 * @param request the client request
 	 * @param response the server response (may be {@code null})
 	 * @param throwable the exception (may be {@code null})
+	 * @param ctx the context
 	 * @return tags to associate with metrics for the request and response exchange
 	 */
-	Iterable<Tag> tags(ClientRequest request, ClientResponse response, Throwable throwable);
+	Iterable<Tag> tags(ClientRequest request, ClientResponse response, Throwable throwable, ContextView ctx);
 
 }

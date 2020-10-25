@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.Tag;
 
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
+import reactor.util.context.ContextView;
 
 /**
  * Default implementation of {@link WebClientExchangeTagsProvider}.
@@ -33,7 +34,7 @@ import org.springframework.web.reactive.function.client.ClientResponse;
 public class DefaultWebClientExchangeTagsProvider implements WebClientExchangeTagsProvider {
 
 	@Override
-	public Iterable<Tag> tags(ClientRequest request, ClientResponse response, Throwable throwable) {
+	public Iterable<Tag> tags(ClientRequest request, ClientResponse response, Throwable throwable, ContextView view) {
 		Tag method = WebClientExchangeTags.method(request);
 		Tag uri = WebClientExchangeTags.uri(request);
 		Tag clientName = WebClientExchangeTags.clientName(request);
